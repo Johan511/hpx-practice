@@ -3,11 +3,13 @@
 #include <iostream>
 #include <cmath>
 
+// #define DEBUG
+
 #define N 1'000'000
 
-typedef double (*F_)(double);
+typedef double(F_)(double);
 
-double integrate(F_ f, double begin, double end, int numPartitions = N)
+double integrate(F_ &&f, double begin, double end, int numPartitions = N)
 {
     double step = (end - begin) / numPartitions;
     std::vector<hpx::future<double>> results_f;
@@ -22,18 +24,17 @@ double integrate(F_ f, double begin, double end, int numPartitions = N)
     double area = 0;
 
     for (hpx::future<double> &x : results_f)
-    {
         area += x.get();
-    }
 
     return area;
 }
 
+#ifdef DEBUG
+
 int hpx_main(hpx::program_options::variables_map &vm)
 {
-    double area =integrate([](double x)
-                               { return sin(x); },
-                               0, 3.14);
+    double area = integrate(cos,
+                            0, 3.14 / 2);
     std::cout << area << std::endl;
     return hpx::local::finalize();
 }
@@ -47,3 +48,5 @@ int main(int argc, char *argv[])
 
     return hpx::local::init(hpx_main, argc, argv, init_args);
 }
+
+#endif
