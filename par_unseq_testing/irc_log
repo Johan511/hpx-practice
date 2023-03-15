@@ -1,0 +1,59 @@
+[18:02:37] <HHN> Hello, following up on our discussion from yesterday (or today, not sure) can you repeat where I need to place the breakpoint to check for par_unseq implementation of algo?
+[18:03:17] <HHN> forgot to log the chat before closing
+[18:06:14] <HHN> to check if par_unseq has been implemented
+[18:06:36] <HHN> libs/core/algorithms/include/hpx/parallel/unseq/loop.hpp right?
+[18:16:54] <hkaiser> all the customizations for unseq are here: https://github.com/STEllAR-GROUP/hpx/tree/master/libs/core/algorithms/include/hpx/parallel/unseq
+[18:18:53] <HHN> some algorithms apart from reduce also have par_unseq implementations right? that is they don't fallback to other implementations
+[18:19:53] <hkaiser> the files in that directory I linked above are used by many algorithms (it's mostly loops, after all), creating a list of algorithms that are actually affected would be good
+[18:20:27] <HHN> yup, working on it
+[18:21:27] <hkaiser> let's add a list like in #1141 to #2271
+[18:22:58] <HHN> ok I was making a separate issue but will rather comment #2271
+[18:23:20] <hkaiser> yah, let's keep things in one place
+[18:24:57] <HHN> is there any specific doc on how to use each algorithm? or are they all identical to the std ones?
+[18:25:42] <hkaiser> they should be identical to the std, but we have extensions on top of it - for your purpose the standards conforming versions should be fine, though
+[18:26:23] <HHN> ok great
+[18:26:35] <hkaiser> https://hpx-docs.stellar-group.org/branches/master/html/api/public_api.html#functions
+[18:27:50] <HHN> might needsome help though (https://github.com/STEllAR-GROUP/hpx/issues/1141), would it be send the md of issues description. would save me the time of querying the github API
+[18:29:57] <HHN> no problem, got the md content
+[18:30:00] <HHN> sorry to bother
+[18:30:02] <hkaiser> +1
+[18:48:10] [NOTICE] This nickname is registered. Please choose a different nickname, or identify via /msg NickServ IDENTIFY hassan <password>
+[18:48:18] <HHN> template <typename Iter, typename F>
+[18:48:18] <HHN>             HPX_HOST_DEVICE HPX_FORCEINLINE static constexpr Iter call(
+[18:48:18] <HHN>                 Iter it, std::size_t num, F&& f, std::true_type)
+[18:48:18] <HHN>             {
+[18:48:18] <HHN>                 while (num >= 4)
+[18:48:18] <HHN>                 {
+[18:48:18] <HHN>                     HPX_INVOKE(f, *it);
+[18:48:18] <HHN>                     HPX_INVOKE(f, *(it + 1));
+[18:48:18] <HHN>                     HPX_INVOKE(f, *(it + 2));
+[18:48:18] <HHN>                     HPX_INVOKE(f, *(it + 3));
+[18:48:18] <HHN>                     it += 4;
+[18:48:18] <HHN>                     num -= 4;
+[18:48:57] <HHN> unseq and par_unseq policies for reduce and for_each break over here, is that expected?
+[18:49:21] <HHN> I believed the loops were parallelised/vectorized by openmp
+[19:53:58] [NOTICE] This nickname is registered. Please choose a different nickname, or identify via /msg NickServ IDENTIFY hassan <password>
+[20:12:29] <HHN> hi, any idea why this is happening, I thought unseq was supposed to break in this file (https://github.com/STEllAR-GROUP/hpx/blob/master/libs/core/algorithms/include/hpx/parallel/unseq/loop.hpp), but rather breaks at (https://github.com/STEllAR-GROUP/hpx/blob/master/libs/core/algorithms/include/hpx/parallel/util/loop.hpp)
+[20:27:07] <hkaiser> what algorithm?
+[20:27:22] <hkaiser> reduce?
+[20:27:51] <hkaiser> I think reduce was not implemented, only transform_reduce, but that's exactly whatI'd ask you to find out
+[20:29:04] <hkaiser> hmmm, #6018 says it was implemented, so it's a bug :/
+[20:29:28] <hkaiser> as said, I have never tried things, I just merged the PR from last year's GSoC
+[20:31:49] <HHN> any chance I messed up the build? don't think that's the case but its disappointing to know I have been going through incorrect code all this while
+[20:32:10] <hkaiser> that for you to find out :/
+[20:35:31] <HHN> par also takes me to (https://github.com/STEllAR-GROUP/hpx/blob/master/libs/core/algorithms/include/hpx/parallel/util/loop.hpp), any idea where exactly the spawning of multiple threads for parallelisation happens?
+[20:36:36] <HHN> I presumed the loop was simply surrounded by a omp pragma directive to parallelise it
+[20:42:21] <hkaiser> in the partitioners/executors
+[20:46:27] <HHN> Giannis Gonidelis did mention that par_unseq executors requires work too, so maybe there is a bug somewhere over there
+[20:47:01] <hkaiser> I'm in a meeting right now, sorry - will get back
+[20:47:15] <HHN> sure np, sorry to disturb
+[22:27:10] <hkaiser> not sure what Giannis had in mind, sorry
+[22:30:02] <HHN> when debugging applications written using hpx (installed using make install) I need to specify the hpx source right?
+[22:31:21] <HHN> something like -I {hpx_src_root}
+[22:33:26] <hkaiser> not sure how gdb works
+[22:33:42] <hkaiser> you might have to tell gdb where to look for sources
+[22:34:41] <HHN> previously when compiling simply using make files i used to use -I, but when dealing with cmake to build my_hpx_project I am not sure what to do
+[22:35:17] <HHN> g++ file.cpp -o file -I {dep_src_file} was what I used to do
+[22:35:34] <HHN> but not sure how that implement -I into cmake
+[22:47:16] <hkaiser> it's not a matter of build parameters, it's all about telling gdb where to look
+[22:48:36] <hkaiser> see https://sourceware.org/gdb/onlinedocs/gdb/Source-Path.html

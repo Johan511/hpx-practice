@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.18)
+project(dft CXX)
+find_package(HPX REQUIRED)
+add_executable(dft main.cpp)
+target_link_libraries(dft HPX::hpx )
