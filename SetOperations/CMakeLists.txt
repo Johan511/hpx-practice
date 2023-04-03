@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.18)
+project(set_operations CXX)
+find_package(HPX REQUIRED)
+add_executable(set_operations src/main.cpp)
+target_link_libraries(set_operations HPX::hpx )
